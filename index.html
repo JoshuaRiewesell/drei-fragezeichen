@@ -57,36 +57,33 @@
             return response.json();
         }
 
-        function setUpPlayer(access_token) {
-            token = access_token;
-            window.onSpotifyWebPlaybackSDKReady = () => {
-                player = new Spotify.Player({
-                    name: 'Web Playback SDK Quick Start Player',
-                    getOAuthToken: cb => { cb(token); }
-                });
+        window.onSpotifyWebPlaybackSDKReady = () => {
+            player = new Spotify.Player({
+                name: 'Web Playback SDK Quick Start Player',
+                getOAuthToken: cb => { cb(token); }
+            });
 
-                player.addListener('initialization_error', ({ message }) => { console.error(message); });
-                player.addListener('authentication_error', ({ message }) => { console.error(message); });
-                player.addListener('account_error', ({ message }) => { console.error(message); });
-                player.addListener('playback_error', ({ message }) => { console.error(message); });
+            player.addListener('initialization_error', ({ message }) => { console.error(message); });
+            player.addListener('authentication_error', ({ message }) => { console.error(message); });
+            player.addListener('account_error', ({ message }) => { console.error(message); });
+            player.addListener('playback_error', ({ message }) => { console.error(message); });
 
-                player.addListener('player_state_changed', state => {
-                    console.log(state);
-                    if (state) {
-                        displayCurrentTrack(state.track_window.current_track);
-                    }
-                });
+            player.addListener('player_state_changed', state => {
+                console.log(state);
+                if (state) {
+                    displayCurrentTrack(state.track_window.current_track);
+                }
+            });
 
-                player.addListener('ready', ({ device_id }) => {
-                    console.log('Ready with Device ID', device_id);
-                    this.device_id = device_id;
-                    document.getElementById('controls').style.display = 'block';
-                    playTrack(device_id, token, 'spotify:track:2M9MK7bHLtZfaoFSTcpa9s');
-                });
+            player.addListener('ready', ({ device_id }) => {
+                console.log('Ready with Device ID', device_id);
+                this.device_id = device_id;
+                document.getElementById('controls').style.display = 'block';
+                playTrack(device_id, token, 'spotify:track:2M9MK7bHLtZfaoFSTcpa9s');
+            });
 
-                player.connect();
-            };
-        }
+            player.connect();
+        };
 
         async function playTrack(device_id, token, track_uri) {
             await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
@@ -139,7 +136,8 @@
             if (code) {
                 const data = await getAccessToken(code);
                 console.log('Access token:', data.access_token);
-                setUpPlayer(data.access_token);
+                token = data.access_token;
+                setUpPlayer(token);
                 document.getElementById('login-btn').style.display = 'none';
             }
         };
