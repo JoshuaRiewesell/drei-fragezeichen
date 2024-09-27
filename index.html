@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Web Player</title>
+</head>
+<body>
+    <h1>Spotify Web Player</h1>
+    <button onclick="login()">Login with Spotify</button>
+    <div id="player"></div>
+    <script src="https://sdk.scdn.co/spotify-player.js"></script>
+    <script>
+        // Insert your Client ID and Redirect URI
+        const CLIENT_ID = 'a9634d40010e400c9a8f2a3f5969f9a8';
+        const REDIRECT_URI = 'https://joshuariewesell.github.io/zweierschaften/';
+
+        function login() {
+            const scopes = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+            const url = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&scope=${encodeURIComponent(scopes)}`;
+            window.location.href = url;
+        }
+
+        function getAccessToken(code) {
+            return fetch('https://accounts.spotify.com/api/token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + '0ee8e63a5df04c20b5f193491558f0fe')
+                },
+                body: new URLSearchParams({
+                    grant_type: 'authorization_code',
+                    code: code,
+                    redirect_uri: REDIRECT_URI
+                })
+            }).then(response => response.json());
+        }
+
+        function setUpPlayer(token) {
+            window.onSpotifyWebPlaybackSDKReady = () => {
+                const player = new Spotify.Player({
+                    name: 'Web Playback SDK Quick Start Player',
+                    getOAuthToken: cb => { cb(token); }
+                });
+
+                // Error handling
+                player.addListener('initialization_error', ({ message }) => { console.error(message); });
+                player.addListener('authentication_error', ({ message }) => { console.error(message); });
+                player.addListener('account_error', ({ message }) => { console.error(message); });
+                player.addListener('playback_error', ({ message }) => { console.error(message); });
+
+                // Playback status updates
+                player.addListener('player_state_changed', state => {
+                    console.log(state);
+                    // Play a specific track
+                    playTrack(state.device_id, token, 'spotify:track:2M9MK7bHLtZfaoFSTcpa9s');
+                });
+
+                // Ready
+                player.addListener('ready', ({ device_id }) => {
+                    console.log('Ready with Device ID', device_id);
+                });
+
+                // Connect to the player
+                player.connect();
+            };
+        }
+
+        function playTrack(device_id, token, track_uri) {
+            fetch(`https://api.spotify.com/v1/me/player/play?device_id=${device_id}`, {
+                method: 'PUT',
+                body: JSON.stringify({ uris: [track_uri] }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+        }
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+
+            if (code) {
+                getAccessToken(code).then(data => {
+                    const { access_token } = data;
+                    setUpPlayer(access_token);
+                });
+            }
+        };
+    </script>
+</body>
+</html>
