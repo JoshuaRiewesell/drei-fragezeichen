@@ -10,13 +10,17 @@
         #controls button {
             margin-right: 10px;
         }
+        #current-track {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Spotify Web Player</h1>
     <button onclick="login()">Login with Spotify</button>
     <div id="player"></div>
-    <div id="controls">
+    <div id="current-track"></div>
+    <div id="controls" style="display:none;">
         <button onclick="play()">Play</button>
         <button onclick="pause()">Pause</button>
         <button onclick="previous()">Previous</button>
@@ -67,6 +71,9 @@
 
                 player.addListener('player_state_changed', state => {
                     console.log(state);
+                    if (state) {
+                        displayCurrentTrack(state.track_window.current_track);
+                    }
                 });
 
                 player.addListener('ready', ({ device_id }) => {
@@ -89,6 +96,15 @@
                     'Authorization': `Bearer ${token}`
                 }
             });
+        }
+
+        function displayCurrentTrack(track) {
+            const currentTrackDiv = document.getElementById('current-track');
+            currentTrackDiv.innerHTML = `
+                <h2>Currently Playing</h2>
+                <p><strong>${track.name}</strong> by ${track.artists.map(artist => artist.name).join(', ')}</p>
+                <img src="${track.album.images[0].url}" alt="${track.name} album cover" width="300">
+            `;
         }
 
         function play() {
