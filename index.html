@@ -3,16 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <title>Spotify Web Player</title>
+    <style>
+        #controls {
+            margin-top: 20px;
+        }
+        #controls button {
+            margin-right: 10px;
+        }
+    </style>
 </head>
 <body>
     <h1>Spotify Web Player</h1>
     <button onclick="login()">Login with Spotify</button>
     <div id="player"></div>
+    <div id="controls" style="display: none;">
+        <button onclick="play()">Play</button>
+        <button onclick="pause()">Pause</button>
+        <button onclick="previous()">Previous</button>
+        <button onclick="next()">Next</button>
+    </div>
     <script src="https://sdk.scdn.co/spotify-player.js"></script>
     <script>
-        // Insert your Client ID and Redirect URI
         const CLIENT_ID = 'a9634d40010e400c9a8f2a3f5969f9a8';
-        const REDIRECT_URI = 'https://joshuariewesell.github.io/drei-fragezeichen/';
+        const REDIRECT_URI = 'https://joshuariewesell.github.io/zweierschaften/';
+
+        let player;
+        let device_id;
+        let token;
 
         function login() {
             const scopes = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
@@ -35,32 +52,30 @@
             }).then(response => response.json());
         }
 
-        function setUpPlayer(token) {
+        function setUpPlayer(access_token) {
+            token = access_token;
             window.onSpotifyWebPlaybackSDKReady = () => {
-                const player = new Spotify.Player({
+                player = new Spotify.Player({
                     name: 'Web Playback SDK Quick Start Player',
                     getOAuthToken: cb => { cb(token); }
                 });
 
-                // Error handling
                 player.addListener('initialization_error', ({ message }) => { console.error(message); });
                 player.addListener('authentication_error', ({ message }) => { console.error(message); });
                 player.addListener('account_error', ({ message }) => { console.error(message); });
                 player.addListener('playback_error', ({ message }) => { console.error(message); });
 
-                // Playback status updates
                 player.addListener('player_state_changed', state => {
                     console.log(state);
-                    // Play a specific track
-                    playTrack(state.device_id, token, 'spotify:track:2M9MK7bHLtZfaoFSTcpa9s');
                 });
 
-                // Ready
                 player.addListener('ready', ({ device_id }) => {
                     console.log('Ready with Device ID', device_id);
+                    this.device_id = device_id;
+                    document.getElementById('controls').style.display = 'block';
+                    playTrack(device_id, token, 'spotify:track:2M9MK7bHLtZfaoFSTcpa9s');
                 });
 
-                // Connect to the player
                 player.connect();
             };
         }
@@ -73,6 +88,30 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 }
+            });
+        }
+
+        function play() {
+            player.resume().then(() => {
+                console.log('Playback resumed');
+            });
+        }
+
+        function pause() {
+            player.pause().then(() => {
+                console.log('Playback paused');
+            });
+        }
+
+        function previous() {
+            player.previousTrack().then(() => {
+                console.log('Skipped to previous track');
+            });
+        }
+
+        function next() {
+            player.nextTrack().then(() => {
+                console.log('Skipped to next track');
             });
         }
 
